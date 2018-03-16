@@ -3,6 +3,7 @@ package cn.wycode;
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
+import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Stack;
 
@@ -66,34 +67,15 @@ public class Main {
             nodes.add(node);
         }
 
-        //设置节点顺序
-        if (count < k) {
-            for (Node n : nodes) {
-                print(n);
-            }
-            return;
-        }
+
+        //按链表顺序加入队列
+        LinkedList<Node> queue = new LinkedList<>();
         String address = firstAddress;
-        Stack<Node> stack = new Stack<>();
-        boolean isOver = false;
         while (!address.equals("-1")) {
             for (int i = 0; i < nodes.size(); i++) { //循环匹配地址
                 Node n = nodes.get(i);
-                if (isOver) {
-                    print(n);
-                    address = n.nextAddress; //查找地址赋值为当前节点的下一个地址
-                    continue;
-                }
-                if (Objects.equals(address, n.address)) {
-                    stack.push(n);
-                    if (stack.size() == k) { //如果栈内节点数量==反转数量，全部挨个出栈输出
-                        while (!stack.isEmpty()) {
-                            print(stack.pop());
-                        }
-                        if(nodes.size()-i-1<k){ //输出完成后检查还够不够反转（size要除去已经压入的节点）
-                            isOver = true;
-                        }
-                    }
+                if (Objects.equals(address, n.address)) { //找到则加入队列
+                    queue.add(n);
                     address = n.nextAddress; //查找地址赋值为当前节点的下一个地址
                     nodes.remove(n); //处理完的移出节点数组，减少循环量
                     break;
@@ -101,6 +83,38 @@ public class Main {
             }
         }
 
+        Stack<Node> stack = new Stack<>();
+        boolean isCanConvert = queue.size() >= k; //是否够反转
+        while (!queue.isEmpty()) { //循环出队列
+            Node n = queue.remove();
+            if (isCanConvert) { //够反转则压入堆栈
+                stack.push(n);
+                if (stack.size() == k) { //压够反转数量就全部输出
+                    isCanConvert = queue.size() >= k; //再次检查是否够反转
+                    while (!stack.isEmpty()) {
+                        //重新赋值next
+                        Node nStack = stack.pop();
+                        if (stack.isEmpty()) { //如果栈里没了，地址就等于队列的下一个
+                            if (queue.isEmpty()) { //队列也没了，地址等于-1
+                                nStack.nextAddress = "-1";
+                            } else {
+                                //如果剩下的还能反转
+                                if (isCanConvert) {
+                                    nStack.nextAddress = queue.get(k - 1).address;
+                                } else {
+                                    nStack.nextAddress = queue.peek().address;
+                                }
+                            }
+                        } else {
+                            nStack.nextAddress = stack.peek().address;
+                        }
+                        print(nStack);
+                    }
+                }
+            } else { //不够反转 直接输出节点
+                print(n);
+            }
+        }
 
     }
 
