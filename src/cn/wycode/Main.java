@@ -1,140 +1,107 @@
 package cn.wycode;
 
 import java.io.BufferedReader;
+import java.io.IOException;
 import java.io.InputStreamReader;
-import java.util.ArrayList;
 import java.util.LinkedList;
 import java.util.Objects;
-import java.util.Stack;
+import java.util.Queue;
 
 /**
- * ## 作业1：Reversing Linked List（25 分）
+ * Given a tree, you are supposed to list all the leaves in the order of top down, and left to right.
  * <p>
- * Given a constant K and a singly linked list L, you are supposed to reverse the links of every K elements on L. For example, given L being 1→2→3→4→5→6, if K=3, then you must output 3→2→1→6→5→4; if K=4, you must output 4→3→2→1→5→6.
+ * - Input Specification:
  * <p>
- * Input Specification:
+ * Each input file contains one test case. For each case, the first line gives a positive integer N (≤10) which is the total number of nodes in the tree -- and hence the nodes are numbered from 0 to N−1. Then N lines follow, each corresponds to a node, and gives the indices of the left and right children of the node. If the child does not exist, a "-" will be put at the position. Any pair of children are separated by a space.
  * <p>
- * Each input file contains one test case. For each case, the first line contains the address of the first node, a positive N (≤10
- * ​5
- * ​​ ) which is the total number of nodes, and a positive K (≤N) which is the length of the sublist to be reversed. The address of a node is a 5-digit nonnegative integer, and NULL is represented by -1.
+ * - Output Specification:
  * <p>
- * Then N lines follow, each describes a node in the format:
+ * For each test case, print in one line all the leaves' indices in the order of top down, and left to right. There must be exactly one space between any adjacent numbers, and no extra space at the end of the line.
  * <p>
- * `Address Data Next`
- * where `Address` is the position of the node, `Data` is an integer, and `Next` is the position of the nextAddress node.
+ * - Sample Input:
  * <p>
- * Output Specification:
- * <p>
- * For each case, output the resulting ordered linked list. Each node occupies a line, and is printed in the same format as in the input.
- * <p>
- * Sample Input:
  * ```bash
- * 00100 6 4
- * 00000 4 99999
- * 00100 1 12309
- * 68237 6 -1
- * 33218 3 00000
- * 99999 5 68237
- * 12309 2 33218
+ * 8
+ * 1 -
+ * - -
+ * 0 -
+ * 2 7
+ * - -
+ * - -
+ * 5 -
+ * 4 6
  * ```
  * Sample Output:
+ * <p>
+ * <p>
  * ```bash
- * 00000 4 33218
- * 33218 3 12309
- * 12309 2 00100
- * 00100 1 99999
- * 99999 5 68237
- * 68237 6 -1
+ * 4 1 5
  * ```
  */
 public class Main {
-    public static void main(String args[]) {
+    public static void main(String args[]) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
-        //读第一行
-        String[] line1Array = getStringArray(reader);
-        String firstAddress = line1Array[0];
-        int count = Integer.parseInt(line1Array[1]);
-        int k = Integer.parseInt(line1Array[2]);
 
-        //读取所有节点
-        ArrayList<Node> nodes = new ArrayList<>(count);
-        for (int i = 0; i < count; i++) {
-            String[] lineArray = getStringArray(reader);
-            Node node = new Node();
-            node.address = lineArray[0];
-            node.data = Integer.parseInt(lineArray[1]);
-            node.nextAddress = lineArray[2];
-            nodes.add(node);
+        int sum = 0;
+        sum = Integer.parseInt(reader.readLine());
+
+        String[] inputs = new String[sum];
+
+        for (int i = 0; i < sum; i++) {
+            inputs[i] = reader.readLine();
         }
 
+        int root_num = findRoot(inputs);
+        StringBuilder sb = new StringBuilder();
+        Queue<String> nodes = new LinkedList<>();
+        nodes.add(inputs[root_num]);
+        checkTree(root_num, nodes, sb, inputs);
+        if (sb.length() > 0) {
+            sb.deleteCharAt(sb.length() - 1);
+        }
+        System.out.println(sb.toString());
+    }
 
-        //按链表顺序加入队列
-        LinkedList<Node> queue = new LinkedList<>();
-        String address = firstAddress;
-        while (!address.equals("-1")) {
-            for (int i = 0; i < nodes.size(); i++) { //循环匹配地址
-                Node n = nodes.get(i);
-                if (Objects.equals(address, n.address)) { //找到则加入队列
-                    queue.add(n);
-                    address = n.nextAddress; //查找地址赋值为当前节点的下一个地址
-                    nodes.remove(n); //处理完的移出节点数组，减少循环量
-                    break;
-                }
+    private static void checkTree(int root_num, Queue<String> nodes, StringBuilder sb, String[] inputs) {
+        while (!nodes.isEmpty()) {
+            String[] lineArg = nodes.poll().split(" ");
+            if (Objects.equals("-", lineArg[0]) && Objects.equals("-", lineArg[1])) {
+                sb.append(root_num);
+                sb.append(' ');
+            }
+            if (!Objects.equals("-", lineArg[0])) {
+                int left = Integer.parseInt(lineArg[0]);
+                nodes.add(inputs[left]);
+            }
+            if (!Objects.equals("-", lineArg[1])) {
+                int right = Integer.parseInt(lineArg[1]);
+                nodes.add(inputs[right]);
+            }
+        }
+    }
+
+
+    private static int findRoot(String[] inputs) {
+        int[] link = new int[inputs.length];
+        for (String input : inputs) {
+            String[] lineArg = input.split(" ");
+            if (!Objects.equals("-", lineArg[0])) {
+                int left_num = Integer.parseInt(lineArg[0]);
+                link[left_num] = 1;
+            }
+            if (!Objects.equals("-", lineArg[1])) {
+                int right_num = Integer.parseInt(lineArg[1]);
+                link[right_num] = 1;
+            }
+        }
+        int i;
+        for (i = 0; i < link.length; i++) {
+            if (link[i] == 0) {
+                break;
             }
         }
 
-        Stack<Node> stack = new Stack<>();
-        boolean isCanConvert = queue.size() >= k; //是否够反转
-        while (!queue.isEmpty()) { //循环出队列
-            Node n = queue.remove();
-            if (isCanConvert) { //够反转则压入堆栈
-                stack.push(n);
-                if (stack.size() == k) { //压够反转数量就全部输出
-                    isCanConvert = queue.size() >= k; //再次检查是否够反转
-                    while (!stack.isEmpty()) {
-                        //重新赋值next
-                        Node nStack = stack.pop();
-                        if (stack.isEmpty()) { //如果栈里没了，地址就等于队列的下一个
-                            if (queue.isEmpty()) { //队列也没了，地址等于-1
-                                nStack.nextAddress = "-1";
-                            } else {
-                                //如果剩下的还能反转
-                                if (isCanConvert) {
-                                    nStack.nextAddress = queue.get(k - 1).address;
-                                } else {
-                                    nStack.nextAddress = queue.peek().address;
-                                }
-                            }
-                        } else {
-                            nStack.nextAddress = stack.peek().address;
-                        }
-                        print(nStack);
-                    }
-                }
-            } else { //不够反转 直接输出节点
-                print(n);
-            }
-        }
-
+        return i;
     }
 
-
-    private static void print(Node n) {
-        System.out.println(n.address + " " + n.data + " " + n.nextAddress);
-    }
-
-    private static String[] getStringArray(BufferedReader reader) {
-        String line1 = null;
-        try {
-            line1 = reader.readLine();
-        } catch (Exception ignore) {
-        }
-        return line1.split(" ");
-    }
-
-    static class Node {
-        String address;
-        int data;
-        String nextAddress;
-    }
 }
