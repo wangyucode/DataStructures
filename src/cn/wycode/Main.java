@@ -6,102 +6,102 @@ import java.io.InputStreamReader;
 import java.util.LinkedList;
 import java.util.Objects;
 import java.util.Queue;
+import java.util.Stack;
 
 /**
- * Given a tree, you are supposed to list all the leaves in the order of top down, and left to right.
+ * An inorder binary tree traversal can be implemented in a non-recursive way with a stack. For example, suppose that when a 6-node binary tree (with the keys numbered from 1 to 6) is traversed, the stack operations are: push(1); push(2); push(3); pop(); pop(); push(4); pop(); pop(); push(5); push(6); pop(); pop(). Then a unique binary tree (shown in Figure 1) can be generated from this sequence of operations. Your task is to give the postorder traversal sequence of this tree.
+ * <p>
+ * - Figure 1
+ * <p>
+ * ![Figure 1](/blog/images/20180327_data_structures03_3.png)
  * <p>
  * - Input Specification:
  * <p>
- * Each input file contains one test case. For each case, the first line gives a positive integer N (≤10) which is the total number of nodes in the tree -- and hence the nodes are numbered from 0 to N−1. Then N lines follow, each corresponds to a node, and gives the indices of the left and right children of the node. If the child does not exist, a "-" will be put at the position. Any pair of children are separated by a space.
+ * Each input file contains one test case. For each case, the first line contains a positive integer N (≤30) which is the total number of nodes in a tree (and hence the nodes are numbered from 1 to N). Then 2N lines follow, each describes a stack operation in the format: "Push X" where X is the index of the node being pushed onto the stack; or "Pop" meaning to pop one node from the stack.
  * <p>
  * - Output Specification:
  * <p>
- * For each test case, print in one line all the leaves' indices in the order of top down, and left to right. There must be exactly one space between any adjacent numbers, and no extra space at the end of the line.
+ * For each test case, print the postorder traversal sequence of the corresponding tree in one line. A solution is guaranteed to exist. All the numbers must be separated by exactly one space, and there must be no extra space at the end of the line.
  * <p>
  * - Sample Input:
  * <p>
  * ```bash
- * 8
- * 1 -
- * - -
- * 0 -
- * 2 7
- * - -
- * - -
- * 5 -
- * 4 6
+ * 6
+ * Push 1
+ * Push 2
+ * Push 3
+ * Pop
+ * Pop
+ * Push 4
+ * Pop
+ * Pop
+ * Push 5
+ * Push 6
+ * Pop
+ * Pop
  * ```
- * Sample Output:
- * <p>
+ * - Sample Output:
  * <p>
  * ```bash
- * 4 1 5
+ * 3 4 2 6 5 1
  * ```
  */
 public class Main {
     public static void main(String args[]) throws IOException {
         BufferedReader reader = new BufferedReader(new InputStreamReader(System.in));
 
-        int sum = 0;
+        int sum;
         sum = Integer.parseInt(reader.readLine());
 
-        String[] inputs = new String[sum];
+        String[] inputs = new String[sum*2];
 
-        for (int i = 0; i < sum; i++) {
+        for (int i = 0; i < inputs.length; i++) {
             inputs[i] = reader.readLine();
         }
 
-        int root_num = findRoot(inputs);
+        Stack<Node> nodes = new Stack<>();
+        String lastOperation = null;
+
+        final String PUSH = "Push";
+        final String POP = "Pop";
+
         StringBuilder sb = new StringBuilder();
-        Queue<String> nodes = new LinkedList<>();
-        nodes.add(inputs[root_num]);
-        checkTree(root_num, nodes, sb, inputs);
+
+        Node parent= null;
+
+        for (int i = 0; i < inputs.length; i++) {
+            String[] lineArg = inputs[i].split(" ");
+            if (Objects.equals(lineArg[0], PUSH)) {
+                Node node = new Node();
+                node.data = Integer.parseInt(lineArg[1]);
+                nodes.push(node);
+                lastOperation = PUSH;
+            } else {
+                Node node = nodes.pop();
+                if(Objects.equals(lastOperation, PUSH)){
+                    sb.append(node.data);
+                    sb.append(' ');
+                    if(parent!=null){
+                        sb.append(parent.data);
+                        sb.append(' ');
+                    }
+                    parent = null;
+                }else{
+                    parent = node;
+                }
+                lastOperation = POP;
+            }
+        }
+
         if (sb.length() > 0) {
             sb.deleteCharAt(sb.length() - 1);
         }
         System.out.println(sb.toString());
     }
 
-    private static void checkTree(int root_num, Queue<String> nodes, StringBuilder sb, String[] inputs) {
-        while (!nodes.isEmpty()) {
-            String[] lineArg = nodes.poll().split(" ");
-            if (Objects.equals("-", lineArg[0]) && Objects.equals("-", lineArg[1])) {
-                sb.append(root_num);
-                sb.append(' ');
-            }
-            if (!Objects.equals("-", lineArg[0])) {
-                int left = Integer.parseInt(lineArg[0]);
-                nodes.add(inputs[left]);
-            }
-            if (!Objects.equals("-", lineArg[1])) {
-                int right = Integer.parseInt(lineArg[1]);
-                nodes.add(inputs[right]);
-            }
-        }
+    static class Node {
+        int data = -1;
+        int left = -1;
+        int right = -1;
     }
-
-
-    private static int findRoot(String[] inputs) {
-        int[] link = new int[inputs.length];
-        for (String input : inputs) {
-            String[] lineArg = input.split(" ");
-            if (!Objects.equals("-", lineArg[0])) {
-                int left_num = Integer.parseInt(lineArg[0]);
-                link[left_num] = 1;
-            }
-            if (!Objects.equals("-", lineArg[1])) {
-                int right_num = Integer.parseInt(lineArg[1]);
-                link[right_num] = 1;
-            }
-        }
-        int i;
-        for (i = 0; i < link.length; i++) {
-            if (link[i] == 0) {
-                break;
-            }
-        }
-
-        return i;
-    }
-
 }
